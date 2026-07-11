@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+
+storage/
+outputs/
+
+.venv/
+venv/
+
+.vscode/
+
+.env
+
+*.zip
