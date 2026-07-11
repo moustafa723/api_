@@ -7,3 +7,5 @@ opencv-python-headless
 trimesh
 scikit-image
 pygltflib
+modal
+aiofiles
