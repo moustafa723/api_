@@ -18,6 +18,8 @@ app = FastAPI(title="Best Slice & GLB API")
 @app.post("/process")
 async def process_case(file: UploadFile = File(...)):
 
+    print("STEP 1 - Request received")
+
     if not file.filename.endswith(".zip"):
         raise HTTPException(status_code=400, detail="Upload ZIP file only.")
 
@@ -30,8 +32,12 @@ async def process_case(file: UploadFile = File(...)):
         with open(zip_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
+        print("STEP 2 - ZIP uploaded")
+
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
             zip_ref.extractall(temp_dir)
+
+        print("STEP 3 - ZIP extracted")
 
         case_folder = None
 
@@ -44,15 +50,23 @@ async def process_case(file: UploadFile = File(...)):
                 case_folder = root
                 break
 
+        print("STEP 4 - Case folder:", case_folder)
+
         if case_folder is None:
             raise HTTPException(status_code=400, detail="Case folder not found.")
 
         ct, liver, tumor = load_case(case_folder)
 
+        print("STEP 5 - CT and masks loaded")
+
         best_slice, pixels = find_best_slice(tumor)
+
+        print("STEP 6 - Best slice:", best_slice)
 
         image = extract_best_slice(ct, best_slice)
         image = apply_window(image)
+
+        print("STEP 7 - Image created")
 
         outputs = "storage"
         os.makedirs(outputs, exist_ok=True)
@@ -63,13 +77,21 @@ async def process_case(file: UploadFile = File(...)):
             "best_slice.png"
         )
 
+        print("STEP 8 - Image saved")
+
         glb_path = os.path.join(outputs, "liver_tumor.glb")
+
+        print("STEP 9 - Starting GLB conversion")
 
         nifti_to_glb(
             os.path.join(case_folder, "liver_mask_pvp.nii.gz"),
             os.path.join(case_folder, "mask_pvp.nii.gz"),
             glb_path,
         )
+
+        print("STEP 10 - GLB created")
+
+        print("STEP 11 - Returning response")
 
         return JSONResponse(
             {
@@ -79,6 +101,10 @@ async def process_case(file: UploadFile = File(...)):
                 "message": "Processing completed successfully."
             }
         )
+
+    except Exception as e:
+        print("ERROR:", str(e))
+        raise
 
     finally:
         file.file.close()
@@ -112,3 +138,8 @@ def get_glb():
         media_type="model/gltf-binary",
         filename="liver_tumor.glb"
     )
+
+
+@app.get("/")
+def root():
+    return {"status": "ok"}
