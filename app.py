@@ -83,11 +83,7 @@ async def process_case(file: UploadFile = File(...)):
 
         print("STEP 9 - Starting GLB conversion")
 
-        nifti_to_glb(
-            os.path.join(case_folder, "liver_mask_pvp.nii.gz"),
-            os.path.join(case_folder, "mask_pvp.nii.gz"),
-            glb_path,
-        )
+      
 
         print("STEP 10 - GLB created")
 
